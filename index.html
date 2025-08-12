@@ -4,12 +4,354 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Biblioteca Valdineia</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ====== Estilos Gerais ====== */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f3f3f3;
+      color: #000;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    header {
+      background: #4a148c;
+      color: #fff;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    .btn {
+      background: #6a1b9a;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s ease, color 0.3s ease;
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      background: #8e24aa;
+    }
+
+    .menu {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+    }
+
+    .section {
+      padding: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 10px;
+      color: #000;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    thead {
+      background: #6a1b9a;
+      color: white;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #ddd;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+      background: #323232;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: none;
+      z-index: 2000;
+    }
+
+    .form-centered {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input, select {
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1.6px solid #000000;
+      outline: none;
+      width: 250px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .input-centered {
+      display: block;
+      margin: 0 auto;
+      padding: 10px 15px;
+      border-radius: 20px;
+      border: 1.2px solid #000000;
+      width: 250px;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    /* ====== Modal ====== */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1500;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      width: 320px;
+      max-width: 90%;
+      text-align: center;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .modal-content h2 {
+      margin-bottom: 20px;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 12px 15px;
+      margin-bottom: 15px;
+      border-radius: 20px;
+      border: 1.5px solid #666;
+      outline: none;
+      text-align: center;
+      font-size: 16px;
+      transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .modal-content input:focus {
+      border-color: #6a1b9a;
+    }
+
+    .modal-content .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 20px;
+      font-size: 18px;
+      background: #6a1b9a;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-weight: 600;
+    }
+
+    .modal-content .btn:hover {
+      background: #8e24aa;
+    }
+
+    .modal.hidden {
+      display: none;
+    }
+
+    /* Blur no main quando modal ativo */
+    body.modal-open main,
+    body.modal-open header {
+      filter: blur(6px);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Centralizar o form e inputs */
+    #loginForm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    /* Email input com largura fixa e texto alinhado à esquerda com padding */
+    #emailLogin {
+      width: 250px;
+      padding: 12px 15px;
+      border-radius: 20px;
+      border: 1.5px solid #666;
+      text-align: left;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .senha-container {
+      position: relative;
+      width: 250px;
+    }
+
+    .senha-container input {
+      width: 100%;
+      padding: 12px 90px 12px 15px; /* espaço para botão texto */
+      border-radius: 20px;
+      border: 1.5px solid #666;
+      font-size: 16px;
+      text-align: left;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .eye-btn {
+      position: static;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #6a1b9a;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 12px;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+
+    .eye-btn:hover {
+      background-color: #8e24aa;
+      color: white;
+    }
+
+    /* ====== Tema Escuro ====== */
+    body.dark-theme {
+      background: #121212;
+      color: #e0e0e0;
+    }
+
+    body.dark-theme header {
+      background: #1f1f1f;
+      color: #e0e0e0;
+    }
+
+    body.dark-theme .btn {
+      background: #bb86fc;
+      color: #121212;
+    }
+
+    body.dark-theme .btn:hover {
+      background: #985eff;
+      color: white;
+    }
+
+    body.dark-theme .menu .card {
+      background: #222;
+      color: #e0e0e0;
+      box-shadow: 0 2px 6px rgba(255,255,255,0.05);
+    }
+
+    body.dark-theme .menu .card:hover {
+      background: #333;
+    }
+
+    body.dark-theme table {
+      background: #222;
+      color: #e0e0e0;
+      border-color: #444;
+    }
+
+    body.dark-theme table thead {
+      background: #333;
+      color: #e0e0e0;
+    }
+
+    body.dark-theme th, body.dark-theme td {
+      border-color: #444;
+    }
+
+    body.dark-theme input,
+    body.dark-theme select {
+      background: #222;
+      color: #e0e0e0;
+      border-color: #444;
+    }
+
+    body.dark-theme .modal-content {
+      background: #222;
+      color: #e0e0e0;
+      box-shadow: 0 0 15px rgba(255,255,255,0.2);
+    }
+
+    #themeToggleBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 4000; /* acima da modal */
+  background: #6a1b9a;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+#themeToggleBtn:hover {
+  background: #8e24aa;
+}
+
+
+  </style>
 </head>
+
+<button id="themeToggleBtn" class="btn">Tema Escuro</button>
+
 <body>
   <header>
     <h1>📚 Biblioteca Valdineia</h1>
-    <div class="header-actions">
+    <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
       <span id="usuarioLogado" style="color: white; margin-right: 15px;"></span>
       <button id="logoutBtn" class="btn">Sair</button>
     </div>
@@ -84,6 +426,218 @@
 
   <div id="toast" class="toast"></div>
 
-  <script type="module" src="script.js"></script>
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { collection, getDocs, addDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const sections = document.querySelectorAll('.section');
+    const menuCards = document.querySelectorAll('.card');
+    const toast = document.getElementById('toast');
+
+    const loginModal = document.getElementById('loginModal');
+    const loginForm = document.getElementById('loginForm');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const usuarioLogadoSpan = document.getElementById('usuarioLogado');
+
+    const senhaInput = document.getElementById('senhaLogin');
+    const toggleSenhaBtn = document.getElementById('toggleSenha');
+
+    // Botão de troca de tema
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+    // Navegação do menu
+    menuCards.forEach(card => {
+      card.addEventListener('click', () => {
+        sections.forEach(sec => sec.classList.add('hidden'));
+        document.getElementById(card.dataset.section).classList.remove('hidden');
+      });
+    });
+
+    // Toast helper
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    // Mostrar/Ocultar modal de login
+    function showLoginModal() {
+      loginModal.classList.remove('hidden');
+      document.body.classList.add('modal-open');
+    }
+
+    function hideLoginModal() {
+      loginModal.classList.add('hidden');
+      document.body.classList.remove('modal-open');
+    }
+
+    // Verifica estado do login
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        usuarioLogadoSpan.textContent = user.email;
+        hideLoginModal();
+        carregarLivros();
+      } else {
+        usuarioLogadoSpan.textContent = '';
+        showLoginModal();
+        sections.forEach(sec => sec.classList.add('hidden'));
+      }
+    });
+
+    // Login via formulário
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('emailLogin').value.trim();
+      const senha = senhaInput.value.trim();
+
+      if (!email || !senha) {
+        showToast('Preencha email e senha.');
+        return;
+      }
+
+      try {
+        await signInWithEmailAndPassword(auth, email, senha);
+        showToast('Logado com sucesso!');
+        loginForm.reset();
+      } catch (error) {
+        showToast('Erro no login: ' + error.message);
+      }
+    });
+
+    // Toggle mostrar/ocultar senha
+    toggleSenhaBtn.addEventListener('click', () => {
+      const tipo = senhaInput.type === 'password' ? 'text' : 'password';
+      senhaInput.type = tipo;
+      toggleSenhaBtn.textContent = tipo === 'password' ? 'Mostrar Senha' : 'Ocultar Senha';
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', async () => {
+      await signOut(auth);
+      showToast('Deslogado!');
+      sections.forEach(sec => sec.classList.add('hidden'));
+    });
+
+    // Função para carregar livros do Firestore
+    async function carregarLivros() {
+      const livros = [];
+      try {
+        const snapshot = await getDocs(collection(db, 'livros'));
+        snapshot.forEach(docSnap => livros.push({ id: docSnap.id, ...docSnap.data() }));
+        livros.sort((a, b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
+
+        renderTabela(livros, 'livrosCadastrados', false);
+        renderTabela(livros, 'listaRemover', true);
+
+        sections.forEach(sec => sec.classList.add('hidden'));
+        document.getElementById('verLivros').classList.remove('hidden');
+
+      } catch (error) {
+        showToast('Erro ao carregar livros: ' + error.message);
+      }
+    }
+
+    // Renderizar tabela de livros
+    function renderTabela(livros, idTabela, comAcoes) {
+      const tbody = document.getElementById(idTabela);
+      tbody.innerHTML = '';
+      livros.forEach(livro => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${livro.nome}</td>
+          <td>${livro.autor}</td>
+          <td>${livro.mesAno || ''}</td>
+          ${comAcoes ? `<td><button class="btn btn-danger" data-id="${livro.id}">Remover</button></td>` : ''}
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (comAcoes) {
+        tbody.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (confirm('Tem certeza que deseja remover este livro?')) {
+              try {
+                await deleteDoc(doc(db, 'livros', btn.dataset.id));
+                showToast('Livro removido!');
+                carregarLivros();
+              } catch (error) {
+                showToast('Erro ao remover: ' + error.message);
+              }
+            }
+          });
+        });
+      }
+    }
+
+    // Cadastrar livro
+    document.getElementById('cadastroLivroForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const nome = document.getElementById('nomeLivro').value.trim();
+      const autor = document.getElementById('autorLivro').value.trim();
+      const mesAno = document.getElementById('mesAnoLivro').value.trim();
+
+      if (!nome || !autor || !mesAno) {
+        showToast('Preencha todos os campos.');
+        return;
+      }
+
+      try {
+        const q = query(collection(db, 'livros'), where('nome', '==', nome), where('autor', '==', autor));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          showToast('Livro já cadastrado.');
+          return;
+        }
+
+        await addDoc(collection(db, 'livros'), { nome, autor, mesAno });
+        showToast('Livro cadastrado!');
+        e.target.reset();
+        carregarLivros();
+      } catch (error) {
+        showToast('Erro ao cadastrar: ' + error.message);
+      }
+    });
+
+    // Abrir seletor mês/ano automaticamente no Chrome/Edge
+    const mesAnoInput = document.getElementById('mesAnoLivro');
+    mesAnoInput.addEventListener('focus', () => {
+      if (mesAnoInput.showPicker) {
+        mesAnoInput.showPicker();
+      }
+    });
+
+    // Filtros
+    document.getElementById('filtroLivros').addEventListener('input', e => filtrarTabela('livrosCadastrados', e.target.value));
+    document.getElementById('filtroRemover').addEventListener('input', e => filtrarTabela('listaRemover', e.target.value));
+
+    function filtrarTabela(idTabela, filtro) {
+      const rows = document.getElementById(idTabela).querySelectorAll('tr');
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filtro.toLowerCase()) ? '' : 'none';
+      });
+    }
+
+    // ====== Troca de tema ======
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        themeToggleBtn.textContent = 'Tema Claro';
+      } else {
+        document.body.classList.remove('dark-theme');
+        themeToggleBtn.textContent = 'Tema Escuro';
+      }
+      localStorage.setItem('theme', theme);
+    }
+
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    applyTheme(savedTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+    });
+  </script>
 </body>
 </html>
