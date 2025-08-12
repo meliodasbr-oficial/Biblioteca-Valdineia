@@ -1,0 +1,244 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f3f3f3;
+}
+
+header {
+  background: #4a148c;
+  color: #fff;
+  padding: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+h1 {
+  margin: 0;
+}
+
+.btn {
+  background: #6a1b9a;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #8e24aa;
+}
+
+.menu {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+}
+
+.section {
+  padding: 20px;
+}
+
+.hidden {
+  display: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  margin-top: 10px;
+}
+
+thead {
+  background: #6a1b9a;
+  color: white;
+}
+
+th, td {
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+.toast {
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  background: #323232;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 5px;
+  display: none;
+  z-index: 2000;
+}
+
+.form-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+input, select {
+  padding: 10px 15px;
+  border-radius: 20px;
+  border: 1.6px solid #000000;
+  outline: none;
+  width: 250px;
+  text-align: center;
+}
+
+.input-centered {
+  display: block;
+  margin: 0 auto;
+  padding: 10px 15px;
+  border-radius: 20px;
+  border: 1.2px solid #000000;
+  width: 250px;
+  text-align: center;
+}
+
+/* Modal overlay */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1500;
+}
+
+/* Card do login */
+.modal-content {
+  background: white;
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  width: 320px;
+  max-width: 90%;
+  text-align: center;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border-radius: 20px;
+  border: 1.5px solid #666;
+  outline: none;
+  text-align: center;
+  font-size: 16px;
+}
+
+.modal-content input:focus {
+  border-color: #6a1b9a;
+}
+
+.modal-content .btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 20px;
+  font-size: 18px;
+  background: #6a1b9a;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.modal-content .btn:hover {
+  background: #8e24aa;
+}
+
+/* Quando modal estiver oculto */
+.modal.hidden {
+  display: none;
+}
+
+/* Blur no main quando modal ativo */
+body.modal-open main,
+body.modal-open header {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Centralizar o form e inputs */
+#loginForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Email input com largura fixa e texto alinhado à esquerda com padding */
+#emailLogin {
+  width: 250px;
+  padding: 12px 15px;
+  border-radius: 20px;
+  border: 1.5px solid #666;
+  text-align: left; /* alinhado à esquerda */
+  font-size: 16px;
+  outline: none;
+}
+
+.senha-container {
+  position: relative;
+  width: 250px;
+}
+
+.senha-container input {
+  width: 100%;
+  padding: 12px 90px 12px 15px; /* espaçamento maior à direita para o botão texto */
+  border-radius: 20px;
+  border: 1.5px solid #666;
+  font-size: 16px;
+  text-align: left;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.eye-btn {
+  position: static;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #6a1b9a;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.eye-btn:hover {
+  background-color: #8e24aa;
+  color: white;
+}

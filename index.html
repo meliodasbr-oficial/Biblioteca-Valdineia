@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Biblioteca Valdineia</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>📚 Biblioteca Valdineia</h1>
+    <div class="header-actions">
+      <span id="usuarioLogado" style="color: white; margin-right: 15px;"></span>
+      <button id="logoutBtn" class="btn">Sair</button>
+    </div>
+  </header>
+
+  <!-- Modal Login -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input type="email" id="emailLogin" placeholder="Email" required />
+        <div class="senha-container">
+          <input type="password" id="senhaLogin" placeholder="Senha" required />
+          <button type="button" id="toggleSenha" aria-label="Mostrar senha" class="eye-btn">Mostrar Senha</button>
+        </div>
+        <button type="submit" class="btn">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <main>
+    <section id="menuSection" class="menu">
+      <div class="card" data-section="cadastrarLivro">➕ Cadastrar Livro</div>
+      <div class="card" data-section="verLivros">📋 Ver Livros</div>
+      <div class="card" data-section="removerLivro">🗑️ Remover Livro</div>
+    </section>
+
+    <!-- Cadastro -->
+    <section id="cadastrarLivro" class="section hidden">
+      <h2>Cadastrar Livro</h2>
+      <form id="cadastroLivroForm" class="form-centered">
+        <input type="text" id="nomeLivro" placeholder="Nome do Livro" required />
+        <input type="text" id="autorLivro" placeholder="Autor" required />
+        <input type="month" id="mesAnoLivro" placeholder="Mês/Ano" required />
+        <button type="submit" class="btn">Cadastrar</button>
+      </form>
+    </section>
+
+    <!-- Lista de Livros -->
+    <section id="verLivros" class="section hidden">
+      <h2>Livros Cadastrados</h2>
+      <input type="text" id="filtroLivros" placeholder="Filtrar..." class="input-centered" />
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Autor</th>
+            <th>Mês/Ano</th>
+          </tr>
+        </thead>
+        <tbody id="livrosCadastrados"></tbody>
+      </table>
+    </section>
+
+    <!-- Remoção -->
+    <section id="removerLivro" class="section hidden">
+      <h2>Remover Livro</h2>
+      <input type="text" id="filtroRemover" placeholder="Filtrar..." class="input-centered" />
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Autor</th>
+            <th>Mês/Ano</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="listaRemover"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
