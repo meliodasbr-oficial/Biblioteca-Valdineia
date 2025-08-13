@@ -43,10 +43,19 @@
       background: #8e24aa;
     }
 
+    .btn-danger {
+      background: #c62828;
+    }
+
+    .btn-danger:hover {
+      background: #e53935;
+    }
+
     .menu {
       display: flex;
       gap: 20px;
       padding: 20px;
+      flex-wrap: wrap;
     }
 
     .card {
@@ -56,6 +65,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       cursor: pointer;
       flex: 1;
+      /*min-width: 180px;*/
       text-align: center;
       transition: 0.2s;
     }
@@ -87,8 +97,16 @@
     }
 
     th, td {
+      font-weight: bold;
       padding: 8px;
       border: 1px solid #ddd;
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .toast {
@@ -323,26 +341,117 @@
     }
 
     #themeToggleBtn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 4000; /* acima da modal */
-  background: #6a1b9a;
-  color: white;
-  border: none;
-  padding: 12px 18px;
-  border-radius: 30px;
-  cursor: pointer;
-  font-weight: 600;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
-  transition: background 0.3s ease, color 0.3s ease;
-}
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 4000; /* acima da modal */
+      background: #6a1b9a;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
 
-#themeToggleBtn:hover {
-  background: #8e24aa;
-}
+    #themeToggleBtn:hover { background: #8e24aa; }
 
+    /* ====== Dialog de Adição de Livros ====== */
+    dialog#dialogAddLivro {
+      border: none;
+      border-radius: 16px;
+      width: min(680px, 92vw);
+      padding: 18px 18px 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
 
+    dialog::backdrop {
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(2px);
+    }
+
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .dialog-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .dialog-search {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    #pesquisaLivro {
+      flex: 1;
+      width: auto;
+      min-width: 220px;
+      border-radius: 12px;
+      text-align: left;
+    }
+
+    #selectMoverStatus {
+      width: auto;
+      min-width: 180px;
+      border-radius: 12px;
+    }
+
+    .dialog-lista {
+      max-height: 50vh;
+      overflow: auto;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+    }
+
+    .dialog-item {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .dialog-item:last-child { border-bottom: none; }
+
+    .dialog-item-title {
+      font-weight: 600;
+    }
+
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 10px 0 2px;
+    }
+
+    /* Dark theme for dialog */
+    body.dark-theme dialog#dialogAddLivro {
+      background: #1f1f1f;
+      color: #e0e0e0;
+      box-shadow: 0 10px 30px rgba(255,255,255,0.08);
+    }
+    body.dark-theme .dialog-lista { border-color: #444; }
+    body.dark-theme .dialog-item { border-bottom-color: #333; }
+    body.dark-theme #pesquisaLivro,
+    body.dark-theme #selectMoverStatus {
+      background: #222; color: #e0e0e0; border-color: #444;
+    }
   </style>
 </head>
 
@@ -376,6 +485,10 @@
     <section id="menuSection" class="menu">
       <div class="card" data-section="cadastrarLivro">➕ Cadastrar Livro</div>
       <div class="card" data-section="verLivros">📋 Ver Livros</div>
+      <div class="card" data-status="Estou Lendo">📖 Estou Lendo</div>
+      <div class="card" data-status="Quero Ler">📅 Quero Ler</div>
+      <div class="card" data-status="Lidos">✅ Lidos</div>
+      <div class="card" data-status="Parei de Ler">⏸️ Parei de Ler</div>
       <div class="card" data-section="removerLivro">🗑️ Remover Livro</div>
     </section>
 
@@ -406,6 +519,28 @@
       </table>
     </section>
 
+    <!-- Status -->
+    <section id="statusSection" class="section hidden">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap: wrap;">
+        <h2 id="statusTitulo" style="margin:0;"></h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="btnAddLivro" class="btn">➕ Adicionar Livro</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Autor</th>
+            <th>Mês/Ano</th>
+            <th style="width:360px;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="statusLivrosTabela"></tbody>
+      </table>
+    </section>
+
     <!-- Remoção -->
     <section id="removerLivro" class="section hidden">
       <h2>Remover Livro</h2>
@@ -426,10 +561,40 @@
 
   <div id="toast" class="toast"></div>
 
+  <!-- Dialog para escolher/adicionar/mover livros -->
+  <dialog id="dialogAddLivro">
+    <div class="dialog-header">
+      <h3 class="dialog-title">Selecionar Livro</h3>
+      <button id="btnFecharDialog" class="btn btn-danger">Fechar</button>
+    </div>
+
+    <div class="dialog-search">
+      <input type="text" id="pesquisaLivro" placeholder="Pesquisar livro por nome ou autor..." />
+      <select id="selectMoverStatus" title="Mover status (opcional)">
+        <option value="">Adicionar como: (status atual)</option>
+        <option value="Estou Lendo">Estou Lendo</option>
+        <option value="Quero Ler">Quero Ler</option>
+        <option value="Lidos">Lidos</option>
+        <option value="Parei de Ler">Parei de Ler</option>
+      </select>
+      <span id="labelStatusAtual" style="font-size:14px;opacity:.8;"></span>
+    </div>
+
+    <ul id="listaLivros" class="dialog-lista"></ul>
+
+    <div class="dialog-footer">
+      <button id="btnFecharDialog2" class="btn btn-danger">Fechar</button>
+    </div>
+  </dialog>
+
   <script type="module">
     import { auth, db } from './firebase-config.js';
-    import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { collection, getDocs, addDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import {
+      signInWithEmailAndPassword, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import {
+      collection, getDocs, addDoc, deleteDoc, doc, query, where, setDoc
+    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     const sections = document.querySelectorAll('.section');
     const menuCards = document.querySelectorAll('.card');
@@ -443,41 +608,38 @@
     const senhaInput = document.getElementById('senhaLogin');
     const toggleSenhaBtn = document.getElementById('toggleSenha');
 
-    // Botão de troca de tema
+    // Tema
     const themeToggleBtn = document.getElementById('themeToggleBtn');
 
-    // Navegação do menu
-    menuCards.forEach(card => {
-      card.addEventListener('click', () => {
-        sections.forEach(sec => sec.classList.add('hidden'));
-        document.getElementById(card.dataset.section).classList.remove('hidden');
-      });
-    });
+    // ====== Estado local ======
+    let statusAtual = "";         // Ex.: "Estou Lendo", "Quero Ler", "Lidos", "Parei de Ler"
+    let todosLivros = [];         // Livros cadastrados (coleção 'livros')
+    let mapaStatusPorLivro = {};  // { livroId: "status" } para o usuário logado
+    const STATUS_OPCOES = ["Estou Lendo", "Quero Ler", "Lidos", "Parei de Ler"];
 
-    // Toast helper
+    // ====== Toast helper ======
     function showToast(msg) {
       toast.textContent = msg;
       toast.style.display = 'block';
       setTimeout(() => toast.style.display = 'none', 3000);
     }
 
-    // Mostrar/Ocultar modal de login
+    // ====== Modal Login ======
     function showLoginModal() {
       loginModal.classList.remove('hidden');
       document.body.classList.add('modal-open');
     }
-
     function hideLoginModal() {
       loginModal.classList.add('hidden');
       document.body.classList.remove('modal-open');
     }
 
-    // Verifica estado do login
-    onAuthStateChanged(auth, user => {
+    onAuthStateChanged(auth, async user => {
       if (user) {
         usuarioLogadoSpan.textContent = user.email;
         hideLoginModal();
-        carregarLivros();
+        await carregarTodosLivros();
+        await carregarLivros(); // lista geral
       } else {
         usuarioLogadoSpan.textContent = '';
         showLoginModal();
@@ -485,7 +647,6 @@
       }
     });
 
-    // Login via formulário
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('emailLogin').value.trim();
@@ -495,7 +656,6 @@
         showToast('Preencha email e senha.');
         return;
       }
-
       try {
         await signInWithEmailAndPassword(auth, email, senha);
         showToast('Logado com sucesso!');
@@ -505,40 +665,75 @@
       }
     });
 
-    // Toggle mostrar/ocultar senha
     toggleSenhaBtn.addEventListener('click', () => {
       const tipo = senhaInput.type === 'password' ? 'text' : 'password';
       senhaInput.type = tipo;
       toggleSenhaBtn.textContent = tipo === 'password' ? 'Mostrar Senha' : 'Ocultar Senha';
     });
 
-    // Logout
     logoutBtn.addEventListener('click', async () => {
       await signOut(auth);
       showToast('Deslogado!');
       sections.forEach(sec => sec.classList.add('hidden'));
     });
 
-    // Função para carregar livros do Firestore
-    async function carregarLivros() {
-      const livros = [];
-      try {
-        const snapshot = await getDocs(collection(db, 'livros'));
-        snapshot.forEach(docSnap => livros.push({ id: docSnap.id, ...docSnap.data() }));
-        livros.sort((a, b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
+// ====== Navegação do menu ======
+menuCards.forEach(card => {
+  card.addEventListener('click', async () => {
+    const sectionId = card.dataset.section;
+    const status = card.dataset.status;
 
-        renderTabela(livros, 'livrosCadastrados', false);
-        renderTabela(livros, 'listaRemover', true);
+    sections.forEach(sec => sec.classList.add('hidden'));
 
-        sections.forEach(sec => sec.classList.add('hidden'));
-        document.getElementById('verLivros').classList.remove('hidden');
-
-      } catch (error) {
-        showToast('Erro ao carregar livros: ' + error.message);
+    if (sectionId) {
+      document.getElementById(sectionId).classList.remove('hidden');
+      if (sectionId === 'verLivros') {
+        await carregarLivros();
+      } else if (sectionId === 'removerLivro') {
+        await carregarLivrosParaRemover();
       }
+    } else if (status) {
+      statusAtual = status;
+      document.getElementById('statusTitulo').textContent = statusAtual;
+      document.getElementById('labelStatusAtual').textContent = `Status atual: ${statusAtual}`;
+      await carregarMapaStatusDoUsuario();
+      await carregarLivrosPorStatus(statusAtual);
+      document.getElementById('statusSection').classList.remove('hidden');
     }
+  });
+});
 
-    // Renderizar tabela de livros
+
+// ====== Firestore: Livros (geral) ======
+async function carregarTodosLivros() {
+  const snap = await getDocs(collection(db, 'livros'));
+  todosLivros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  todosLivros.sort((a, b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
+}
+
+async function carregarLivros() {
+  try {
+    if (todosLivros.length === 0) await carregarTodosLivros();
+    renderTabela(todosLivros, 'livrosCadastrados', false);
+    sections.forEach(sec => sec.classList.add('hidden'));
+    document.getElementById('verLivros').classList.remove('hidden');
+  } catch (error) {
+    showToast('Erro ao carregar livros: ' + error.message);
+  }
+}
+
+// NOVA FUNÇÃO — Carregar para remover
+async function carregarLivrosParaRemover() {
+  try {
+    if (todosLivros.length === 0) await carregarTodosLivros();
+    renderTabela(todosLivros, 'listaRemover', true); // com botões de remover
+  } catch (error) {
+    showToast('Erro ao carregar livros para remover: ' + error.message);
+  }
+}
+
+
+    // Renderizar tabela de livros (geral)
     function renderTabela(livros, idTabela, comAcoes) {
       const tbody = document.getElementById(idTabela);
       tbody.innerHTML = '';
@@ -555,22 +750,33 @@
 
       if (comAcoes) {
         tbody.querySelectorAll('button').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            if (confirm('Tem certeza que deseja remover este livro?')) {
-              try {
-                await deleteDoc(doc(db, 'livros', btn.dataset.id));
-                showToast('Livro removido!');
-                carregarLivros();
-              } catch (error) {
-                showToast('Erro ao remover: ' + error.message);
-              }
-            }
-          });
-        });
+  btn.addEventListener('click', async () => {
+    if (confirm('Tem certeza que deseja remover este livro?')) {
+      try {
+        const livroId = btn.dataset.id;
+
+        // Deleta o livro da coleção 'livros'
+        await deleteDoc(doc(db, 'livros', livroId));
+
+        // Deleta os status relacionados a esse livro na coleção 'statusLivros'
+        const qStatus = query(collection(db, 'statusLivros'), where('livroId', '==', livroId));
+        const snapStatus = await getDocs(qStatus);
+        const deletions = snapStatus.docs.map(d => deleteDoc(doc(db, 'statusLivros', d.id)));
+        await Promise.all(deletions);
+
+        showToast('Livro e seus status removidos!');
+        await carregarTodosLivros();
+        await carregarLivros();
+      } catch (error) {
+        showToast('Erro ao remover: ' + error.message);
+      }
+    }
+  });
+});
       }
     }
 
-    // Cadastrar livro
+    // ====== Cadastro de livro ======
     document.getElementById('cadastroLivroForm').addEventListener('submit', async e => {
       e.preventDefault();
       const nome = document.getElementById('nomeLivro').value.trim();
@@ -583,8 +789,12 @@
       }
 
       try {
-        const q = query(collection(db, 'livros'), where('nome', '==', nome), where('autor', '==', autor));
-        const snapshot = await getDocs(q);
+        const qLivros = query(
+          collection(db, 'livros'),
+          where('nome', '==', nome),
+          where('autor', '==', autor)
+        );
+        const snapshot = await getDocs(qLivros);
         if (!snapshot.empty) {
           showToast('Livro já cadastrado.');
           return;
@@ -593,7 +803,8 @@
         await addDoc(collection(db, 'livros'), { nome, autor, mesAno });
         showToast('Livro cadastrado!');
         e.target.reset();
-        carregarLivros();
+        await carregarTodosLivros();
+        await carregarLivros();
       } catch (error) {
         showToast('Erro ao cadastrar: ' + error.message);
       }
@@ -602,9 +813,7 @@
     // Abrir seletor mês/ano automaticamente no Chrome/Edge
     const mesAnoInput = document.getElementById('mesAnoLivro');
     mesAnoInput.addEventListener('focus', () => {
-      if (mesAnoInput.showPicker) {
-        mesAnoInput.showPicker();
-      }
+      if (mesAnoInput.showPicker) mesAnoInput.showPicker();
     });
 
     // Filtros
@@ -618,6 +827,201 @@
       });
     }
 
+    // ====== Status (statusLivros) ======
+    // Mantém no mapa o status do usuário por livro (para montar UI e evitar duplicidade)
+    async function carregarMapaStatusDoUsuario() {
+      mapaStatusPorLivro = {};
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const qUser = query(collection(db, 'statusLivros'), where('usuarioId', '==', user.uid));
+      const snap = await getDocs(qUser);
+      snap.forEach(d => {
+        const data = d.data();
+        mapaStatusPorLivro[data.livroId] = { status: data.status, _docId: d.id };
+      });
+    }
+
+    async function carregarLivrosPorStatus(status) {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Garante cache carregado
+      if (!Object.keys(mapaStatusPorLivro).length) await carregarMapaStatusDoUsuario();
+
+      const livrosFiltrados = todosLivros.filter(l => mapaStatusPorLivro[l.id]?.status === status);
+      renderTabelaStatus(livrosFiltrados, status);
+    }
+
+    function renderTabelaStatus(livros, status) {
+      const tbody = document.getElementById('statusLivrosTabela');
+      tbody.innerHTML = '';
+
+      livros.forEach(livro => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${livro.nome}</td>
+          <td>${livro.autor}</td>
+          <td>${livro.mesAno || ''}</td>
+          <td>
+            <div class="table-actions">
+              <select class="selectMover" data-livro="${livro.id}">
+                <option value="">Mover para...</option>
+                ${STATUS_OPCOES.map(s => `<option value="${s}" ${s===status ? 'disabled' : ''}>${s}</option>`).join('')}
+              </select>
+              <button class="btn btn-danger btnRemoverStatus" data-livro="${livro.id}">Remover da lista</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Mover status
+      tbody.querySelectorAll('.selectMover').forEach(sel => {
+        sel.addEventListener('change', async () => {
+          const novoStatus = sel.value;
+          if (!novoStatus) return;
+          await upsertStatus(sel.dataset.livro, novoStatus);
+          await carregarMapaStatusDoUsuario();
+          await carregarLivrosPorStatus(statusAtual);
+          showToast('Status atualizado!');
+        });
+      });
+
+      // Remover status
+      tbody.querySelectorAll('.btnRemoverStatus').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Remover este livro desta lista?')) return;
+          await removerStatus(btn.dataset.livro);
+          await carregarMapaStatusDoUsuario();
+          await carregarLivrosPorStatus(statusAtual);
+          showToast('Livro removido da lista.');
+        });
+      });
+    }
+
+    // Upsert: cria/atualiza único doc (usuarioId + livroId)
+    async function upsertStatus(livroId, novoStatus) {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      // Tenta achar doc existente do usuário para esse livro
+      const q = query(
+        collection(db, 'statusLivros'),
+        where('usuarioId', '==', user.uid),
+        where('livroId', '==', livroId)
+      );
+      const snap = await getDocs(q);
+
+      if (!snap.empty) {
+        // Atualiza o doc existente (muda de Estou Lendo -> Lidos etc.)
+        const docRef = doc(db, 'statusLivros', snap.docs[0].id);
+        await setDoc(docRef, { usuarioId: user.uid, livroId, status: novoStatus });
+      } else {
+        // Cria o doc
+        // Podemos criar com setDoc(doc(db,'statusLivros', `${user.uid}_${livroId}`), {...})
+        // para chave estável e evitar duplicidade por condições de corrida:
+        const docId = `${user.uid}_${livroId}`;
+        const docRef = doc(db, 'statusLivros', docId);
+        await setDoc(docRef, { usuarioId: user.uid, livroId, status: novoStatus });
+      }
+    }
+
+    async function removerStatus(livroId) {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const docId = `${user.uid}_${livroId}`;
+      await deleteDoc(doc(db, 'statusLivros', docId)).catch(async () => {
+        // fallback se docId diferente (compatibilidade caso já tenha docs antigos)
+        const q = query(
+          collection(db, 'statusLivros'),
+          where('usuarioId', '==', user.uid),
+          where('livroId', '==', livroId)
+        );
+        const snap = await getDocs(q);
+        const deletions = snap.docs.map(d => deleteDoc(doc(db, 'statusLivros', d.id)));
+        await Promise.all(deletions);
+      });
+    }
+
+    // ====== Dialog Adicionar Livro ======
+    const dialog = document.getElementById('dialogAddLivro');
+    const lista = document.getElementById('listaLivros');
+    const pesquisa = document.getElementById('pesquisaLivro');
+    const selectMoverStatus = document.getElementById('selectMoverStatus');
+    const labelStatusAtual = document.getElementById('labelStatusAtual');
+
+    function abrirDialogLivros() {
+      // status padrão do dialog é o statusAtual
+      selectMoverStatus.value = '';
+      labelStatusAtual.textContent = `Status atual: ${statusAtual}`;
+      pesquisa.value = '';
+      renderListaDialog('');
+
+      dialog.showModal();
+    }
+
+    function renderListaDialog(filtro) {
+      lista.innerHTML = '';
+
+      // Ordena por nome; filtra por nome/autor; mostra chip de status se já tiver
+      const filtrados = todosLivros
+        .filter(l =>
+          l.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+          (l.autor || '').toLowerCase().includes(filtro.toLowerCase())
+        )
+        .sort((a,b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
+
+      filtrados.forEach(livro => {
+        const li = document.createElement('li');
+        li.className = 'dialog-item';
+
+        const statusExistente = mapaStatusPorLivro[livro.id]?.status || '';
+
+        li.innerHTML = `
+          <div>
+            <div class="dialog-item-title">${livro.nome}</div>
+            <div style="font-size:13px; opacity:.8;">${livro.autor || ''} ${livro.mesAno ? '• ' + livro.mesAno : ''}</div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            ${statusExistente ? `<span style="font-size:12px; padding:4px 8px; border-radius:12px; border:1px solid #bbb;">${statusExistente}</span>` : ''}
+            <button class="btn btnAddAoStatus" data-livro="${livro.id}">Adicionar</button>
+          </div>
+        `;
+        lista.appendChild(li);
+      });
+
+      // Bind dos botões Adicionar
+      lista.querySelectorAll('.btnAddAoStatus').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const livroId = btn.dataset.livro;
+          const destino = selectMoverStatus.value || statusAtual; // se selecionou um status no select, usa ele
+          await upsertStatus(livroId, destino);
+          await carregarMapaStatusDoUsuario();
+          await carregarLivrosPorStatus(statusAtual);
+          showToast(`Livro definido como "${destino}".`);
+          // Mantém o dialog aberto para multiadição; se quiser fechar automaticamente, descomente:
+          // dialog.close();
+          renderListaDialog(pesquisa.value); // atualiza chips de status após adicionar
+        });
+      });
+    }
+
+    // Abrir/fechar dialog
+    document.getElementById('btnAddLivro').addEventListener('click', async () => {
+      await carregarMapaStatusDoUsuario();
+      abrirDialogLivros();
+    });
+    document.getElementById('btnFecharDialog').addEventListener('click', () => dialog.close());
+    document.getElementById('btnFecharDialog2').addEventListener('click', () => dialog.close());
+    pesquisa.addEventListener('input', () => renderListaDialog(pesquisa.value));
+    selectMoverStatus.addEventListener('change', () => {
+      // só atualiza o label para clareza (opcional)
+      const dest = selectMoverStatus.value || statusAtual;
+      labelStatusAtual.textContent = `Adicionar como: ${dest}`;
+    });
+
     // ====== Troca de tema ======
     function applyTheme(theme) {
       if (theme === 'dark') {
@@ -629,10 +1033,8 @@
       }
       localStorage.setItem('theme', theme);
     }
-
     const savedTheme = localStorage.getItem('theme') || 'light';
     applyTheme(savedTheme);
-
     themeToggleBtn.addEventListener('click', () => {
       const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
