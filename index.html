@@ -151,7 +151,6 @@
       transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
     }
 
-    /* ====== Modal ====== */
     .modal {
       position: fixed;
       top: 0;
@@ -218,7 +217,6 @@
       display: none;
     }
 
-    /* Blur no main quando modal ativo */
     body.modal-open main,
     body.modal-open header {
       filter: blur(6px);
@@ -226,7 +224,6 @@
       user-select: none;
     }
 
-    /* Centralizar o form e inputs */
     #loginForm {
       display: flex;
       flex-direction: column;
@@ -234,7 +231,6 @@
       gap: 15px;
     }
 
-    /* Email input com largura fixa e texto alinhado à esquerda com padding */
     #emailLogin {
       width: 250px;
       padding: 12px 15px;
@@ -252,7 +248,7 @@
 
     .senha-container input {
       width: 100%;
-      padding: 12px 90px 12px 15px; /* espaço para botão texto */
+      padding: 12px 90px 12px 15px;
       border-radius: 20px;
       border: 1.5px solid #666;
       font-size: 16px;
@@ -358,7 +354,6 @@
 
     #themeToggleBtn:hover { background: #8e24aa; }
 
-    /* ====== Dialog de Adição de Livros ====== */
     dialog#dialogAddLivro {
       border: none;
       border-radius: 16px;
@@ -498,7 +493,10 @@
       <form id="cadastroLivroForm" class="form-centered">
         <input type="text" id="nomeLivro" placeholder="Nome do Livro" required />
         <input type="text" id="autorLivro" placeholder="Autor" required />
+        <input type="text" id="prateleiraLivro" placeholder="Número da Prateleira" required />
         <input type="month" id="mesAnoLivro" placeholder="Mês/Ano" required />
+        <button type="button" id="btnAbrirPicker" class="btn">📅 Selecionar Mês</button>
+
         <button type="submit" class="btn">Cadastrar</button>
       </form>
     </section>
@@ -512,6 +510,7 @@
           <tr>
             <th>Nome</th>
             <th>Autor</th>
+            <th>Prateleira</th>
             <th>Mês/Ano</th>
           </tr>
         </thead>
@@ -533,6 +532,7 @@
           <tr>
             <th>Nome</th>
             <th>Autor</th>
+            <th>Prateleira</th>
             <th>Mês/Ano</th>
             <th style="width:360px;">Ação</th>
           </tr>
@@ -550,6 +550,7 @@
           <tr>
             <th>Nome</th>
             <th>Autor</th>
+            <th>Prateleira</th>
             <th>Mês/Ano</th>
             <th>Ação</th>
           </tr>
@@ -561,7 +562,6 @@
 
   <div id="toast" class="toast"></div>
 
-  <!-- Dialog para escolher/adicionar/mover livros -->
   <dialog id="dialogAddLivro">
     <div class="dialog-header">
       <h3 class="dialog-title">Selecionar Livro</h3>
@@ -587,95 +587,128 @@
     </div>
   </dialog>
 
-  <script type="module">
-    import { auth, db } from './firebase-config.js';
-    import {
-      signInWithEmailAndPassword, signOut, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import {
-      collection, getDocs, addDoc, deleteDoc, doc, query, where, setDoc
-    } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+  <dialog id="confirmDialog">
+  <div style="padding:20px; max-width:400px; text-align:center;">
+    <p id="confirmMessage" style="margin-bottom:20px;"></p>
+    <div style="display:flex; justify-content:center; gap:10px;">
+      <button id="confirmYes" class="btn btn-success">Sim</button>
+      <button id="confirmNo" class="btn btn-danger">Não</button>
+    </div>
+  </div>
+</dialog>
 
-    const sections = document.querySelectorAll('.section');
-    const menuCards = document.querySelectorAll('.card');
-    const toast = document.getElementById('toast');
 
-    const loginModal = document.getElementById('loginModal');
-    const loginForm = document.getElementById('loginForm');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const usuarioLogadoSpan = document.getElementById('usuarioLogado');
+<script type="module">
+import { auth, db } from './firebase-config.js';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { collection, getDocs, addDoc, deleteDoc, doc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-    const senhaInput = document.getElementById('senhaLogin');
-    const toggleSenhaBtn = document.getElementById('toggleSenha');
+const sections = document.querySelectorAll('.section');
+const menuCards = document.querySelectorAll('.card');
+const toast = document.getElementById('toast');
 
-    // Tema
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
+const loginModal = document.getElementById('loginModal');
+const loginForm = document.getElementById('loginForm');
+const logoutBtn = document.getElementById('logoutBtn');
+const usuarioLogadoSpan = document.getElementById('usuarioLogado');
 
-    // ====== Estado local ======
-    let statusAtual = "";         // Ex.: "Estou Lendo", "Quero Ler", "Lidos", "Parei de Ler"
-    let todosLivros = [];         // Livros cadastrados (coleção 'livros')
-    let mapaStatusPorLivro = {};  // { livroId: "status" } para o usuário logado
-    const STATUS_OPCOES = ["Estou Lendo", "Quero Ler", "Lidos", "Parei de Ler"];
+const senhaInput = document.getElementById('senhaLogin');
+const toggleSenhaBtn = document.getElementById('toggleSenha');
 
-    // ====== Toast helper ======
-    function showToast(msg) {
-      toast.textContent = msg;
-      toast.style.display = 'block';
-      setTimeout(() => toast.style.display = 'none', 3000);
-    }
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 
-    // ====== Modal Login ======
-    function showLoginModal() {
-      loginModal.classList.remove('hidden');
-      document.body.classList.add('modal-open');
-    }
-    function hideLoginModal() {
-      loginModal.classList.add('hidden');
-      document.body.classList.remove('modal-open');
-    }
+// Modos: 'numeric' ou 'alphanumeric'
+const PRATELEIRA_MODE = 'numeric';
 
-    onAuthStateChanged(auth, async user => {
-      if (user) {
-        usuarioLogadoSpan.textContent = user.email;
-        hideLoginModal();
-        await carregarTodosLivros();
-        await carregarLivros(); // lista geral
-      } else {
-        usuarioLogadoSpan.textContent = '';
-        showLoginModal();
-        sections.forEach(sec => sec.classList.add('hidden'));
-      }
-    });
+function sanitizePrateleira(value) {
+  if (PRATELEIRA_MODE === 'numeric') {
+    return value.replace(/\D+/g, '');
+  }
+  return value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+}
 
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('emailLogin').value.trim();
-      const senha = senhaInput.value.trim();
+function validatePrateleira(value) {
+  if (PRATELEIRA_MODE === 'numeric') return /^\d+$/.test(value);
+  return /^[A-Z0-9-]+$/.test(value);
+}
 
-      if (!email || !senha) {
-        showToast('Preencha email e senha.');
-        return;
-      }
-      try {
-        await signInWithEmailAndPassword(auth, email, senha);
-        showToast('Logado com sucesso!');
-        loginForm.reset();
-      } catch (error) {
-        showToast('Erro no login: ' + error.message);
-      }
-    });
+function toFirestorePrateleira(value) {
+  return PRATELEIRA_MODE === 'numeric' ? Number(value) : value;
+}
 
-    toggleSenhaBtn.addEventListener('click', () => {
-      const tipo = senhaInput.type === 'password' ? 'text' : 'password';
-      senhaInput.type = tipo;
-      toggleSenhaBtn.textContent = tipo === 'password' ? 'Mostrar Senha' : 'Ocultar Senha';
-    });
+const prateleiraInput = document.getElementById('prateleiraLivro');
+prateleiraInput.addEventListener('input', () => {
+  prateleiraInput.value = sanitizePrateleira(prateleiraInput.value);
+});
 
-    logoutBtn.addEventListener('click', async () => {
-      await signOut(auth);
-      showToast('Deslogado!');
-      sections.forEach(sec => sec.classList.add('hidden'));
-    });
+let statusAtual = "";
+let todosLivros = [];
+let mapaStatusPorLivro = {};
+const STATUS_OPCOES = ["Estou Lendo", "Quero Ler", "Lidos", "Parei de Ler"];
+
+// ====== Toast helper ======
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+// ====== Formata data MM/YYYY ======
+function formatMesAnoBR(valor) {
+  if (!valor) return '';
+  const [ano, mes] = valor.split('-');
+  return `${mes}/${ano}`;
+}
+
+// ====== Modal Login ======
+function showLoginModal() {
+  loginModal.classList.remove('hidden');
+  document.body.classList.add('modal-open');
+}
+function hideLoginModal() {
+  loginModal.classList.add('hidden');
+  document.body.classList.remove('modal-open');
+}
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    usuarioLogadoSpan.textContent = user.email;
+    hideLoginModal();
+    await carregarTodosLivros();
+    await carregarLivros();
+  } else {
+    usuarioLogadoSpan.textContent = '';
+    showLoginModal();
+    sections.forEach(sec => sec.classList.add('hidden'));
+  }
+});
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('emailLogin').value.trim();
+  const senha = senhaInput.value.trim();
+  if (!email || !senha) { showToast('Preencha email e senha.'); return; }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, senha);
+    showToast('Logado com sucesso!');
+    loginForm.reset();
+  } catch (error) {
+    showToast('Erro no login: ' + error.message);
+  }
+});
+
+toggleSenhaBtn.addEventListener('click', () => {
+  const tipo = senhaInput.type === 'password' ? 'text' : 'password';
+  senhaInput.type = tipo;
+  toggleSenhaBtn.textContent = tipo === 'password' ? 'Mostrar Senha' : 'Ocultar Senha';
+});
+
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  showToast('Deslogado!');
+  sections.forEach(sec => sec.classList.add('hidden'));
+});
 
 // ====== Navegação do menu ======
 menuCards.forEach(card => {
@@ -687,11 +720,8 @@ menuCards.forEach(card => {
 
     if (sectionId) {
       document.getElementById(sectionId).classList.remove('hidden');
-      if (sectionId === 'verLivros') {
-        await carregarLivros();
-      } else if (sectionId === 'removerLivro') {
-        await carregarLivrosParaRemover();
-      }
+      if (sectionId === 'verLivros') await carregarLivros();
+      else if (sectionId === 'removerLivro') await carregarLivrosParaRemover();
     } else if (status) {
       statusAtual = status;
       document.getElementById('statusTitulo').textContent = statusAtual;
@@ -703,11 +733,14 @@ menuCards.forEach(card => {
   });
 });
 
-
-// ====== Firestore: Livros (geral) ======
 async function carregarTodosLivros() {
   const snap = await getDocs(collection(db, 'livros'));
-  todosLivros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  todosLivros = snap.docs.map(d => {
+    const data = d.data();
+    let prateleira = data.prateleira;
+    if (typeof prateleira === 'string' && /^\d+$/.test(prateleira)) prateleira = Number(prateleira);
+    return { id: d.id, ...data, prateleira };
+  });
   todosLivros.sort((a, b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
 }
 
@@ -722,324 +755,296 @@ async function carregarLivros() {
   }
 }
 
-// NOVA FUNÇÃO — Carregar para remover
 async function carregarLivrosParaRemover() {
   try {
     if (todosLivros.length === 0) await carregarTodosLivros();
-    renderTabela(todosLivros, 'listaRemover', true); // com botões de remover
+    renderTabela(todosLivros, 'listaRemover', true);
   } catch (error) {
     showToast('Erro ao carregar livros para remover: ' + error.message);
   }
 }
 
-
-    // Renderizar tabela de livros (geral)
-    function renderTabela(livros, idTabela, comAcoes) {
-      const tbody = document.getElementById(idTabela);
-      tbody.innerHTML = '';
-      livros.forEach(livro => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${livro.nome}</td>
-          <td>${livro.autor}</td>
-          <td>${livro.mesAno || ''}</td>
-          ${comAcoes ? `<td><button class="btn btn-danger" data-id="${livro.id}">Remover</button></td>` : ''}
-        `;
-        tbody.appendChild(tr);
-      });
-
-      if (comAcoes) {
-        tbody.querySelectorAll('button').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    if (confirm('Tem certeza que deseja remover este livro?')) {
-      try {
-        const livroId = btn.dataset.id;
-
-        // Deleta o livro da coleção 'livros'
-        await deleteDoc(doc(db, 'livros', livroId));
-
-        // Deleta os status relacionados a esse livro na coleção 'statusLivros'
-        const qStatus = query(collection(db, 'statusLivros'), where('livroId', '==', livroId));
-        const snapStatus = await getDocs(qStatus);
-        const deletions = snapStatus.docs.map(d => deleteDoc(doc(db, 'statusLivros', d.id)));
-        await Promise.all(deletions);
-
-        showToast('Livro e seus status removidos!');
-        await carregarTodosLivros();
-        await carregarLivros();
-      } catch (error) {
-        showToast('Erro ao remover: ' + error.message);
-      }
-    }
+function renderTabela(livros, idTabela, comAcoes) {
+  const tbody = document.getElementById(idTabela);
+  tbody.innerHTML = '';
+  livros.forEach(livro => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${livro.nome}</td>
+      <td>${livro.autor}</td>
+      <td>${livro.prateleira || ''}</td>
+      <td>${formatMesAnoBR(livro.mesAno) || ''}</td>
+      ${comAcoes ? `<td><button class="btn btn-danger" data-id="${livro.id}">Remover</button></td>` : ''}
+    `;
+    tbody.appendChild(tr);
   });
-});
-      }
-    }
 
-    // ====== Cadastro de livro ======
-    document.getElementById('cadastroLivroForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const nome = document.getElementById('nomeLivro').value.trim();
-      const autor = document.getElementById('autorLivro').value.trim();
-      const mesAno = document.getElementById('mesAnoLivro').value.trim();
+  if (comAcoes) {
+    tbody.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const ok = await showConfirm('Tem certeza que deseja remover este livro?');
+        if (!ok) return;
 
-      if (!nome || !autor || !mesAno) {
-        showToast('Preencha todos os campos.');
-        return;
-      }
+        try {
+          const livroId = btn.dataset.id;
+          await deleteDoc(doc(db, 'livros', livroId));
+          const qStatus = query(collection(db, 'statusLivros'), where('livroId', '==', livroId));
+          const snapStatus = await getDocs(qStatus);
+          const deletions = snapStatus.docs.map(d => deleteDoc(doc(db, 'statusLivros', d.id)));
+          await Promise.all(deletions);
 
-      try {
-        const qLivros = query(
-          collection(db, 'livros'),
-          where('nome', '==', nome),
-          where('autor', '==', autor)
-        );
-        const snapshot = await getDocs(qLivros);
-        if (!snapshot.empty) {
-          showToast('Livro já cadastrado.');
-          return;
+          showToast('Livro e seus status removidos!');
+          await carregarTodosLivros();
+          await carregarLivros();
+        } catch (error) {
+          showToast('Erro ao remover: ' + error.message);
         }
-
-        await addDoc(collection(db, 'livros'), { nome, autor, mesAno });
-        showToast('Livro cadastrado!');
-        e.target.reset();
-        await carregarTodosLivros();
-        await carregarLivros();
-      } catch (error) {
-        showToast('Erro ao cadastrar: ' + error.message);
-      }
+      });
     });
+  }
+}
 
-    // Abrir seletor mês/ano automaticamente no Chrome/Edge
-    const mesAnoInput = document.getElementById('mesAnoLivro');
-    mesAnoInput.addEventListener('focus', () => {
-      if (mesAnoInput.showPicker) mesAnoInput.showPicker();
-    });
+document.getElementById('cadastroLivroForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const nome = document.getElementById('nomeLivro').value.trim();
+  const autor = document.getElementById('autorLivro').value.trim();
+  const prateleiraRaw = document.getElementById('prateleiraLivro').value.trim();
+  const prateleiraSan = sanitizePrateleira(prateleiraRaw);
+  const mesAno = document.getElementById('mesAnoLivro').value.trim();
 
-    // Filtros
-    document.getElementById('filtroLivros').addEventListener('input', e => filtrarTabela('livrosCadastrados', e.target.value));
-    document.getElementById('filtroRemover').addEventListener('input', e => filtrarTabela('listaRemover', e.target.value));
+  if (!nome || !autor || !prateleiraSan || !mesAno) { showToast('Preencha todos os campos.'); return; }
+  if (!validatePrateleira(prateleiraSan)) {
+    showToast(PRATELEIRA_MODE==='numeric' ? 'A prateleira deve conter apenas números.' : 'A prateleira deve conter apenas letras, números ou hífen.');
+    return;
+  }
 
-    function filtrarTabela(idTabela, filtro) {
-      const rows = document.getElementById(idTabela).querySelectorAll('tr');
-      rows.forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(filtro.toLowerCase()) ? '' : 'none';
-      });
-    }
+  try {
+    const qLivros = query(collection(db,'livros'), where('nome','==',nome), where('autor','==',autor));
+    const snapshot = await getDocs(qLivros);
+    if (!snapshot.empty) { showToast('Livro já cadastrado.'); return; }
 
-    // ====== Status (statusLivros) ======
-    // Mantém no mapa o status do usuário por livro (para montar UI e evitar duplicidade)
-    async function carregarMapaStatusDoUsuario() {
-      mapaStatusPorLivro = {};
-      const user = auth.currentUser;
-      if (!user) return;
+    await addDoc(collection(db, 'livros'), { nome, autor, prateleira: toFirestorePrateleira(prateleiraSan), mesAno });
+    showToast('Livro cadastrado!');
+    e.target.reset();
+    await carregarTodosLivros();
+    await carregarLivros();
+  } catch (error) {
+    showToast('Erro ao cadastrar: ' + error.message);
+  }
+});
 
-      const qUser = query(collection(db, 'statusLivros'), where('usuarioId', '==', user.uid));
-      const snap = await getDocs(qUser);
-      snap.forEach(d => {
-        const data = d.data();
-        mapaStatusPorLivro[data.livroId] = { status: data.status, _docId: d.id };
-      });
-    }
+const mesAnoInput = document.getElementById('mesAnoLivro');
+const btnAbrirPicker = document.getElementById('btnAbrirPicker');
 
-    async function carregarLivrosPorStatus(status) {
-      const user = auth.currentUser;
-      if (!user) return;
+btnAbrirPicker.addEventListener('click', () => {
+  if (mesAnoInput.showPicker) mesAnoInput.showPicker();
+  else mesAnoInput.focus();
+});
 
-      // Garante cache carregado
-      if (!Object.keys(mapaStatusPorLivro).length) await carregarMapaStatusDoUsuario();
+document.getElementById('filtroLivros').addEventListener('input', e => filtrarTabela('livrosCadastrados', e.target.value));
+document.getElementById('filtroRemover').addEventListener('input', e => filtrarTabela('listaRemover', e.target.value));
 
-      const livrosFiltrados = todosLivros.filter(l => mapaStatusPorLivro[l.id]?.status === status);
-      renderTabelaStatus(livrosFiltrados, status);
-    }
+function filtrarTabela(idTabela, filtro) {
+  const rows = document.getElementById(idTabela).querySelectorAll('tr');
+  rows.forEach(row => { row.style.display = row.textContent.toLowerCase().includes(filtro.toLowerCase()) ? '' : 'none'; });
+}
 
-    function renderTabelaStatus(livros, status) {
-      const tbody = document.getElementById('statusLivrosTabela');
-      tbody.innerHTML = '';
+async function carregarMapaStatusDoUsuario() {
+  mapaStatusPorLivro = {};
+  const user = auth.currentUser;
+  if (!user) return;
 
-      livros.forEach(livro => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${livro.nome}</td>
-          <td>${livro.autor}</td>
-          <td>${livro.mesAno || ''}</td>
-          <td>
-            <div class="table-actions">
-              <select class="selectMover" data-livro="${livro.id}">
-                <option value="">Mover para...</option>
-                ${STATUS_OPCOES.map(s => `<option value="${s}" ${s===status ? 'disabled' : ''}>${s}</option>`).join('')}
-              </select>
-              <button class="btn btn-danger btnRemoverStatus" data-livro="${livro.id}">Remover da lista</button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+  const qUser = query(collection(db, 'statusLivros'), where('usuarioId','==',user.uid));
+  const snap = await getDocs(qUser);
+  snap.forEach(d => { const data = d.data(); mapaStatusPorLivro[data.livroId] = { status:data.status,_docId:d.id }; });
+}
 
-      // Mover status
-      tbody.querySelectorAll('.selectMover').forEach(sel => {
-        sel.addEventListener('change', async () => {
-          const novoStatus = sel.value;
-          if (!novoStatus) return;
-          await upsertStatus(sel.dataset.livro, novoStatus);
-          await carregarMapaStatusDoUsuario();
-          await carregarLivrosPorStatus(statusAtual);
-          showToast('Status atualizado!');
-        });
-      });
+async function carregarLivrosPorStatus(status) {
+  const user = auth.currentUser;
+  if (!user) return;
 
-      // Remover status
-      tbody.querySelectorAll('.btnRemoverStatus').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (!confirm('Remover este livro desta lista?')) return;
-          await removerStatus(btn.dataset.livro);
-          await carregarMapaStatusDoUsuario();
-          await carregarLivrosPorStatus(statusAtual);
-          showToast('Livro removido da lista.');
-        });
-      });
-    }
+  if (!Object.keys(mapaStatusPorLivro).length) await carregarMapaStatusDoUsuario();
+  const livrosFiltrados = todosLivros.filter(l => mapaStatusPorLivro[l.id]?.status === status);
+  renderTabelaStatus(livrosFiltrados, status);
+}
 
-    // Upsert: cria/atualiza único doc (usuarioId + livroId)
-    async function upsertStatus(livroId, novoStatus) {
-      const user = auth.currentUser;
-      if (!user) return;
+function renderTabelaStatus(livros, status) {
+  const tbody = document.getElementById('statusLivrosTabela');
+  tbody.innerHTML = '';
 
-      // Tenta achar doc existente do usuário para esse livro
-      const q = query(
-        collection(db, 'statusLivros'),
-        where('usuarioId', '==', user.uid),
-        where('livroId', '==', livroId)
-      );
-      const snap = await getDocs(q);
+  livros.forEach(livro => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${livro.nome}</td>
+      <td>${livro.autor}</td>
+      <td>${livro.prateleira ?? ''}</td>
+      <td>${formatMesAnoBR(livro.mesAno) || ''}</td>
+      <td>
+        <div class="table-actions">
+          <select class="selectMover" data-livro="${livro.id}">
+            <option value="">Mover para...</option>
+            ${STATUS_OPCOES.map(s => `<option value="${s}" ${s===status?'disabled':''}>${s}</option>`).join('')}
+          </select>
+          <button class="btn btn-danger btnRemoverStatus" data-livro="${livro.id}">Remover da lista</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 
-      if (!snap.empty) {
-        // Atualiza o doc existente (muda de Estou Lendo -> Lidos etc.)
-        const docRef = doc(db, 'statusLivros', snap.docs[0].id);
-        await setDoc(docRef, { usuarioId: user.uid, livroId, status: novoStatus });
-      } else {
-        // Cria o doc
-        // Podemos criar com setDoc(doc(db,'statusLivros', `${user.uid}_${livroId}`), {...})
-        // para chave estável e evitar duplicidade por condições de corrida:
-        const docId = `${user.uid}_${livroId}`;
-        const docRef = doc(db, 'statusLivros', docId);
-        await setDoc(docRef, { usuarioId: user.uid, livroId, status: novoStatus });
-      }
-    }
-
-    async function removerStatus(livroId) {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const docId = `${user.uid}_${livroId}`;
-      await deleteDoc(doc(db, 'statusLivros', docId)).catch(async () => {
-        // fallback se docId diferente (compatibilidade caso já tenha docs antigos)
-        const q = query(
-          collection(db, 'statusLivros'),
-          where('usuarioId', '==', user.uid),
-          where('livroId', '==', livroId)
-        );
-        const snap = await getDocs(q);
-        const deletions = snap.docs.map(d => deleteDoc(doc(db, 'statusLivros', d.id)));
-        await Promise.all(deletions);
-      });
-    }
-
-    // ====== Dialog Adicionar Livro ======
-    const dialog = document.getElementById('dialogAddLivro');
-    const lista = document.getElementById('listaLivros');
-    const pesquisa = document.getElementById('pesquisaLivro');
-    const selectMoverStatus = document.getElementById('selectMoverStatus');
-    const labelStatusAtual = document.getElementById('labelStatusAtual');
-
-    function abrirDialogLivros() {
-      // status padrão do dialog é o statusAtual
-      selectMoverStatus.value = '';
-      labelStatusAtual.textContent = `Status atual: ${statusAtual}`;
-      pesquisa.value = '';
-      renderListaDialog('');
-
-      dialog.showModal();
-    }
-
-    function renderListaDialog(filtro) {
-      lista.innerHTML = '';
-
-      // Ordena por nome; filtra por nome/autor; mostra chip de status se já tiver
-      const filtrados = todosLivros
-        .filter(l =>
-          l.nome.toLowerCase().includes(filtro.toLowerCase()) ||
-          (l.autor || '').toLowerCase().includes(filtro.toLowerCase())
-        )
-        .sort((a,b) => a.nome.localeCompare(b.nome, 'pt', { sensitivity: 'base' }));
-
-      filtrados.forEach(livro => {
-        const li = document.createElement('li');
-        li.className = 'dialog-item';
-
-        const statusExistente = mapaStatusPorLivro[livro.id]?.status || '';
-
-        li.innerHTML = `
-          <div>
-            <div class="dialog-item-title">${livro.nome}</div>
-            <div style="font-size:13px; opacity:.8;">${livro.autor || ''} ${livro.mesAno ? '• ' + livro.mesAno : ''}</div>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            ${statusExistente ? `<span style="font-size:12px; padding:4px 8px; border-radius:12px; border:1px solid #bbb;">${statusExistente}</span>` : ''}
-            <button class="btn btnAddAoStatus" data-livro="${livro.id}">Adicionar</button>
-          </div>
-        `;
-        lista.appendChild(li);
-      });
-
-      // Bind dos botões Adicionar
-      lista.querySelectorAll('.btnAddAoStatus').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const livroId = btn.dataset.livro;
-          const destino = selectMoverStatus.value || statusAtual; // se selecionou um status no select, usa ele
-          await upsertStatus(livroId, destino);
-          await carregarMapaStatusDoUsuario();
-          await carregarLivrosPorStatus(statusAtual);
-          showToast(`Livro definido como "${destino}".`);
-          // Mantém o dialog aberto para multiadição; se quiser fechar automaticamente, descomente:
-          // dialog.close();
-          renderListaDialog(pesquisa.value); // atualiza chips de status após adicionar
-        });
-      });
-    }
-
-    // Abrir/fechar dialog
-    document.getElementById('btnAddLivro').addEventListener('click', async () => {
+  tbody.querySelectorAll('.selectMover').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const novoStatus = sel.value;
+      if (!novoStatus) return;
+      await upsertStatus(sel.dataset.livro, novoStatus);
       await carregarMapaStatusDoUsuario();
-      abrirDialogLivros();
+      await carregarLivrosPorStatus(statusAtual);
+      showToast('Status atualizado!');
     });
-    document.getElementById('btnFecharDialog').addEventListener('click', () => dialog.close());
-    document.getElementById('btnFecharDialog2').addEventListener('click', () => dialog.close());
-    pesquisa.addEventListener('input', () => renderListaDialog(pesquisa.value));
-    selectMoverStatus.addEventListener('change', () => {
-      // só atualiza o label para clareza (opcional)
-      const dest = selectMoverStatus.value || statusAtual;
-      labelStatusAtual.textContent = `Adicionar como: ${dest}`;
-    });
+  });
 
-    // ====== Troca de tema ======
-    function applyTheme(theme) {
-      if (theme === 'dark') {
-        document.body.classList.add('dark-theme');
-        themeToggleBtn.textContent = 'Tema Claro';
-      } else {
-        document.body.classList.remove('dark-theme');
-        themeToggleBtn.textContent = 'Tema Escuro';
-      }
-      localStorage.setItem('theme', theme);
-    }
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    applyTheme(savedTheme);
-    themeToggleBtn.addEventListener('click', () => {
-      const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      applyTheme(newTheme);
+  tbody.querySelectorAll('.btnRemoverStatus').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const ok = await showConfirm('Remover este livro desta lista?');
+      if (!ok) return;
+      await removerStatus(btn.dataset.livro);
+      await carregarMapaStatusDoUsuario();
+      await carregarLivrosPorStatus(statusAtual);
+      showToast('Livro removido da lista.');
     });
-  </script>
+  });
+}
+
+async function upsertStatus(livroId, novoStatus) {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const q = query(collection(db,'statusLivros'), where('usuarioId','==',user.uid), where('livroId','==',livroId));
+  const snap = await getDocs(q);
+
+  if (!snap.empty) {
+    const docRef = doc(db,'statusLivros',snap.docs[0].id);
+    await setDoc(docRef, { usuarioId:user.uid, livroId, status:novoStatus });
+  } else {
+    const docId = `${user.uid}_${livroId}`;
+    const docRef = doc(db,'statusLivros',docId);
+    await setDoc(docRef, { usuarioId:user.uid, livroId, status:novoStatus });
+  }
+}
+
+async function removerStatus(livroId) {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const docId = `${user.uid}_${livroId}`;
+  await deleteDoc(doc(db,'statusLivros',docId)).catch(async ()=>{
+    const q = query(collection(db,'statusLivros'), where('usuarioId','==',user.uid), where('livroId','==',livroId));
+    const snap = await getDocs(q);
+    const deletions = snap.docs.map(d=>deleteDoc(doc(db,'statusLivros',d.id)));
+    await Promise.all(deletions);
+  });
+}
+
+const dialog = document.getElementById('dialogAddLivro');
+const lista = document.getElementById('listaLivros');
+const pesquisa = document.getElementById('pesquisaLivro');
+const selectMoverStatus = document.getElementById('selectMoverStatus');
+const labelStatusAtual = document.getElementById('labelStatusAtual');
+
+function abrirDialogLivros() {
+  selectMoverStatus.value = '';
+  labelStatusAtual.textContent = `Status atual: ${statusAtual}`;
+  pesquisa.value = '';
+  renderListaDialog('');
+  dialog.showModal();
+}
+
+function renderListaDialog(filtro) {
+  lista.innerHTML = '';
+
+  const filtrados = todosLivros
+    .filter(l => l.nome.toLowerCase().includes(filtro.toLowerCase()) || (l.autor||'').toLowerCase().includes(filtro.toLowerCase()))
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt',{sensitivity:'base'}));
+
+  filtrados.forEach(livro => {
+    const li = document.createElement('li');
+    li.className = 'dialog-item';
+
+    const statusExistente = mapaStatusPorLivro[livro.id]?.status || '';
+
+    li.innerHTML = `
+      <div>
+        <div class="dialog-item-title">${livro.nome}</div>
+        <div style="font-size:13px; opacity:.8;">
+          ${livro.autor||''} 
+          ${livro.prateleira!=null ? '• Prateleira ' + livro.prateleira : ''}  
+          ${livro.mesAno ? '• ' + formatMesAnoBR(livro.mesAno) : ''}
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        ${statusExistente ? `<span style="font-size:12px; padding:4px 8px; border-radius:12px; border:1px solid #bbb;">${statusExistente}</span>` : ''}
+        <button class="btn btnAddAoStatus" data-livro="${livro.id}">Adicionar</button>
+      </div>
+    `;
+    lista.appendChild(li);
+  });
+
+  lista.querySelectorAll('.btnAddAoStatus').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const livroId = btn.dataset.livro;
+      const destino = selectMoverStatus.value || statusAtual;
+      await upsertStatus(livroId,destino);
+      await carregarMapaStatusDoUsuario();
+      await carregarLivrosPorStatus(statusAtual);
+      showToast(`Livro definido como "${destino}".`);
+      renderListaDialog(pesquisa.value);
+    });
+  });
+}
+
+document.getElementById('btnAddLivro').addEventListener('click', async ()=>{ await carregarMapaStatusDoUsuario(); abrirDialogLivros(); });
+document.getElementById('btnFecharDialog').addEventListener('click', ()=>dialog.close());
+document.getElementById('btnFecharDialog2').addEventListener('click', ()=>dialog.close());
+pesquisa.addEventListener('input', ()=>renderListaDialog(pesquisa.value));
+selectMoverStatus.addEventListener('change', ()=>{
+  const dest = selectMoverStatus.value || statusAtual;
+  labelStatusAtual.textContent = `Adicionar como: ${dest}`;
+});
+
+function applyTheme(theme) {
+  if(theme==='dark'){document.body.classList.add('dark-theme'); themeToggleBtn.textContent='Tema Claro';}
+  else {document.body.classList.remove('dark-theme'); themeToggleBtn.textContent='Tema Escuro';}
+  localStorage.setItem('theme', theme);
+}
+const savedTheme = localStorage.getItem('theme') || 'light';
+applyTheme(savedTheme);
+themeToggleBtn.addEventListener('click', ()=>{
+  const currentTheme = document.body.classList.contains('dark-theme')?'dark':'light';
+  const newTheme = currentTheme==='dark'?'light':'dark';
+  applyTheme(newTheme);
+});
+
+function showConfirm(message) {
+  return new Promise(resolve=>{
+    const dialog = document.getElementById('confirmDialog');
+    const msg = document.getElementById('confirmMessage');
+    const yesBtn = document.getElementById('confirmYes');
+    const noBtn = document.getElementById('confirmNo');
+
+    msg.textContent = message;
+
+    function cleanup(){ yesBtn.removeEventListener('click',onYes); noBtn.removeEventListener('click',onNo); dialog.close(); }
+    function onYes(){ cleanup(); resolve(true); }
+    function onNo(){ cleanup(); resolve(false); }
+
+    yesBtn.addEventListener('click',onYes);
+    noBtn.addEventListener('click',onNo);
+
+    dialog.showModal();
+  });
+}
+
+</script>
+
 </body>
 </html>
