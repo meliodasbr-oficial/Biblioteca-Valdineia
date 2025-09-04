@@ -9,13 +9,13 @@
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      background: #f3f3f3;
-      color: #000;
+      background: #671468;
+      color: white;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     header {
-      background: #4a148c;
+      background: #2a42ff;
       color: #fff;
       padding: 15px;
       display: flex;
@@ -59,7 +59,7 @@
     }
 
     .card {
-      background: white;
+      background: #0084d0;
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
@@ -92,14 +92,14 @@
     }
 
     thead {
-      background: #6a1b9a;
+      background: #2a42ff;
       color: white;
     }
 
     th, td {
       font-weight: bold;
       padding: 8px;
-      border: 1px solid #ddd;
+      border: 1.5px solid #000000;
     }
 
     .table-actions {
@@ -166,10 +166,10 @@
     }
 
     .modal-content {
-      background: white;
+      background: linear-gradient(to bottom right, #1e1f6eab, #4f036eba);
       padding: 30px 40px;
       border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      box-shadow: 0 0 15px rgb(0, 0, 0);
       width: 320px;
       max-width: 90%;
       text-align: center;
@@ -178,6 +178,7 @@
 
     .modal-content h2 {
       margin-bottom: 20px;
+      color: white;
     }
 
     .modal-content input {
@@ -264,7 +265,7 @@
       border: none;
       cursor: pointer;
       font-size: 14px;
-      color: #6a1b9a;
+      color: white;
       font-weight: 600;
       padding: 4px 8px;
       border-radius: 12px;
@@ -447,6 +448,27 @@
     body.dark-theme #selectMoverStatus {
       background: #222; color: #e0e0e0; border-color: #444;
     }
+
+    .menu .card {
+  background: #0084d0; /* azul normal */
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s ease;
+}
+
+/* Hover */
+.menu .card:hover {
+  background: #00509e; /* azul escuro */
+}
+
+/* Selecionado */
+.menu .card.selected {
+  background: #006400; /* verde escuro */
+}
+
   </style>
 </head>
 
@@ -713,6 +735,12 @@ logoutBtn.addEventListener('click', async () => {
 // ====== Navegação do menu ======
 menuCards.forEach(card => {
   card.addEventListener('click', async () => {
+    // Remove a seleção de todos os cards
+    menuCards.forEach(c => c.classList.remove('selected'));
+
+    // Adiciona a seleção ao card clicado
+    card.classList.add('selected');
+
     const sectionId = card.dataset.section;
     const status = card.dataset.status;
 
@@ -732,6 +760,7 @@ menuCards.forEach(card => {
     }
   });
 });
+
 
 async function carregarTodosLivros() {
   const snap = await getDocs(collection(db, 'livros'));
